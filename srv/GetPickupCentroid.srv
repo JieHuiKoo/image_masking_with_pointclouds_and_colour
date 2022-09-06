@@ -2,3 +2,5 @@
 ---
 geometry_msgs/PoseStamped object_centroid
 std_msgs/String object_class
+sensor_msgs/PointCloud2 object_pointcloud
+bool object_valid
