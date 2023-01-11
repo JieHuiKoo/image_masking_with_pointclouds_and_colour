@@ -2,29 +2,32 @@
 import rospy
 import sys
 import cv2
-from sensor_msgs.msg import Image
+
 from cv_bridge import CvBridge
 import numpy as np
+import os
 
+from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker
-
 import message_filters
 
 import math
 
+file_num = 0
+
 class boundingbox:
     width = float(0)
     height = float(0)
-    topleft = Point(0, 0, 0)
-    bottomright = Point(0, 0, 0)
+    topLeft = Point(0, 0, 0)
+    bottomRight = Point(0, 0, 0)
     centroid = Point(0, 0, 0)
 
 def draw_bounding_boxes(input_image, boundingBoxPoints):
     
     image = input_image.copy()
     for boundingBoxLocation in boundingBoxPoints:
-        image = cv2.rectangle(image, (boundingBoxLocation[0].topleft.x, boundingBoxLocation[0].topleft.y), (boundingBoxLocation[0].bottomright.x, boundingBoxLocation[0].bottomright.y), (255, 0, 0), 3)
+        image = cv2.rectangle(image, (boundingBoxLocation[0].topLeft.x, boundingBoxLocation[0].topLeft.y), (boundingBoxLocation[0].bottomRight.x, boundingBoxLocation[0].bottomRight.y), (255, 0, 0), 3)
 
     return image
 
@@ -60,37 +63,72 @@ def dist_between_bb_centroid(bb1, bb2):
     return math.sqrt(pow(bb1.centroid.x - bb2.centroid.x,2) + pow(bb1.centroid.y - bb2.centroid.y, 2))
 
 def do_boxes_intersect(bb1, bb2):
-  return (abs((bb1.topleft.x + bb1.width/2) - (bb2.topleft.x + bb2.width/2)) * 2 < (bb1.width + bb2.width)) and \
-    (abs((bb1.topleft.y + bb1.height/2) - (bb2.topleft.y + bb2.height/2)) * 2 < (bb1.height + bb2.height))
+  return (abs((bb1.topLeft.x + bb1.width/2) - (bb2.topLeft.x + bb2.width/2)) * 2 < (bb1.width + bb2.width)) and \
+    (abs((bb1.topLeft.y + bb1.height/2) - (bb2.topLeft.y + bb2.height/2)) * 2 < (bb1.height + bb2.height))
 
 def get_bounding_box_metrics(boundingBoxPoints):
     bb = boundingbox() 
-    bb.topleft = boundingBoxPoints[0]
-    bb.bottomright = boundingBoxPoints[1]
-    bb.width = abs(bb.topleft.x - bb.bottomright.x)
-    bb.height = abs(bb.topleft.y - bb.bottomright.y)
-    bb.centroid = Point(bb.topleft.x + bb.width/2, bb.topleft.y + bb.height/2, 0)
+    bb.topLeft = boundingBoxPoints[0]
+    bb.bottomRight = boundingBoxPoints[1]
+    bb.width = abs(bb.topLeft.x - bb.bottomRight.x)
+    bb.height = abs(bb.topLeft.y - bb.bottomRight.y)
+    bb.centroid = Point(bb.topLeft.x + bb.width/2, bb.topLeft.y + bb.height/2, 0)
 
     return bb
+
+def get_cropped_object(image, bb_corners):
+
+    if bb_corners:
+        bb1 = bb_corners[0][0]
+        bb2 = bb_corners[0][1]
+
+        if (bb1.width * bb1.height) > (bb2.width * bb2.height):
+            finalbb = bb1
+        else:
+            finalbb = bb2
+        
+        crop_img = image[finalbb.topLeft.y+3:finalbb.topLeft.y+finalbb.height-3, finalbb.topLeft.x+3:finalbb.topLeft.x+finalbb.width-3]
+
+        return crop_img
+
+def save_image(image):
+    global file_num
+    file_directory = os.getcwd() + "/export"
+    
+    print(file_directory)
+    
+    file_num += 1
+
+    if not (os.path.exists(file_directory)):
+        os.makedirs(file_directory)
+
+    # cv2.imwrite(file_directory + "/" + str(file_num) + ".jpg", image)
 
 def process_image(image_msg, bb_fromImage, bb_fromCloud):
 
     # Declare the cvBridge object
     bridge = CvBridge()
-    orig = bridge.imgmsg_to_cv2(image_msg, "bgr8")
+    proc_image = bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
     bb_fromImage_corners = get_boundingBoxPoints_from_marker(bb_fromImage.points)
     bb_fromCloud_corners = get_boundingBoxPoints_from_marker(bb_fromCloud.points)
 
     bb_corners = get_intersecting_boundingBox(bb_fromImage_corners, bb_fromCloud_corners)
 
-    resized = draw_bounding_boxes(orig, bb_corners)
+    # proc_image = draw_bounding_boxes(proc_image, bb_corners)
 
-    image_message = bridge.cv2_to_imgmsg(resized, encoding="passthrough")
-    
-    image_pub = rospy.Publisher('armCamera/nearestObject', Image, queue_size=100)
+    cropped_object = get_cropped_object(proc_image, bb_corners)
 
-    image_pub.publish(image_message)
+    if cropped_object is not None:
+        proc_image = bridge.cv2_to_imgmsg(cropped_object, encoding="passthrough")
+        
+        # Define the image publisher
+        image_pub = rospy.Publisher('armCamera/nearestObject', Image, queue_size=100)
+        image_pub.publish(proc_image)
+        
+        save_image(cropped_object)
+    else:
+        pass
 
 def start_node():
     rospy.init_node('image_masking')
@@ -112,3 +150,4 @@ if __name__ == '__main__':
         start_node()
     except rospy.ROSInterruptException:
         pass
+
