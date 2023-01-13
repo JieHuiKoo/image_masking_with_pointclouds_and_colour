@@ -14,7 +14,7 @@ import message_filters
 
 import math
 
-file_num = 0
+file_num = 62
 
 class boundingbox:
     width = float(0)
@@ -93,16 +93,16 @@ def get_cropped_object(image, bb_corners):
 
 def save_image(image):
     global file_num
-    file_directory = os.getcwd() + "/export"
-    
-    print(file_directory)
+    file_directory = os.getcwd() + "/pot"
     
     file_num += 1
 
     if not (os.path.exists(file_directory)):
         os.makedirs(file_directory)
 
-    # cv2.imwrite(file_directory + "/" + str(file_num) + ".jpg", image)
+    file_name = file_directory + "/" + str(file_num) + ".jpg"
+    print("Saving Image: " + file_name)
+    # cv2.imwrite(file_name, image)
 
 def process_image(image_msg, bb_fromImage, bb_fromCloud):
 
