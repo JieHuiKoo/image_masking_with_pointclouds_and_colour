@@ -3,7 +3,6 @@ import rospy
 import sys
 import cv2
 
-from cv_bridge import CvBridge
 import numpy as np
 import os
 
@@ -14,6 +13,9 @@ import message_filters
 
 import math
 
+print("Python Version: " + str(sys.version_info[0]) + '.' + str(sys.version_info[1]))
+print("OpenCV Version: " + str(cv2.__version__))
+
 file_num = 62
 
 class boundingbox:
@@ -22,6 +24,28 @@ class boundingbox:
     topLeft = Point(0, 0, 0)
     bottomRight = Point(0, 0, 0)
     centroid = Point(0, 0, 0)
+
+def imgmsg_to_cv2(img_msg):
+    if img_msg.encoding != "bgr8":
+        rospy.logerr("This Coral detect node has been hardcoded to the 'bgr8' encoding.  Come change the code if you're actually trying to implement a new camera")
+    dtype = np.dtype("uint8") # Hardcode to 8 bits...
+    dtype = dtype.newbyteorder('>' if img_msg.is_bigendian else '<')
+    image_opencv = np.ndarray(shape=(img_msg.height, img_msg.width, 3), # and three channels of data. Since OpenCV works with bgr natively, we don't need to reorder the channels.
+                    dtype=dtype, buffer=img_msg.data)
+    # If the byt order is different between the message and the system.
+    if img_msg.is_bigendian == (sys.byteorder == 'little'):
+        image_opencv = image_opencv.byteswap().newbyteorder()
+    return image_opencv
+
+def cv2_to_imgmsg(cv_image):
+    img_msg = Image()
+    img_msg.height = cv_image.shape[0]
+    img_msg.width = cv_image.shape[1]
+    img_msg.encoding = "bgr8"
+    img_msg.is_bigendian = 0
+    img_msg.data = cv_image.tostring()
+    img_msg.step = len(img_msg.data) // img_msg.height # That double line is actually integer division, not a comment
+    return img_msg
 
 def draw_bounding_boxes(input_image, boundingBoxPoints):
     
@@ -91,9 +115,9 @@ def get_cropped_object(image, bb_corners):
 
         return crop_img
 
-def save_image(image):
+def save_image(image, save_flag):
     global file_num
-    file_directory = os.getcwd() + "/pot"
+    file_directory = os.getcwd() + "/test"
     
     file_num += 1
 
@@ -101,14 +125,15 @@ def save_image(image):
         os.makedirs(file_directory)
 
     file_name = file_directory + "/" + str(file_num) + ".jpg"
-    print("Saving Image: " + file_name)
-    # cv2.imwrite(file_name, image)
+    
+    if save_flag: 
+        print("Saving Image: " + file_name)
+        cv2.imwrite(file_name, image)
 
 def process_image(image_msg, bb_fromImage, bb_fromCloud):
 
     # Declare the cvBridge object
-    bridge = CvBridge()
-    proc_image = bridge.imgmsg_to_cv2(image_msg, "bgr8")
+    proc_image = imgmsg_to_cv2(image_msg, "bgr8")
 
     bb_fromImage_corners = get_boundingBoxPoints_from_marker(bb_fromImage.points)
     bb_fromCloud_corners = get_boundingBoxPoints_from_marker(bb_fromCloud.points)
@@ -120,13 +145,13 @@ def process_image(image_msg, bb_fromImage, bb_fromCloud):
     cropped_object = get_cropped_object(proc_image, bb_corners)
 
     if cropped_object is not None:
-        proc_image = bridge.cv2_to_imgmsg(cropped_object, encoding="passthrough")
+        proc_image = cv2_to_imgmsg(cropped_object, encoding="passthrough")
         
         # Define the image publisher
         image_pub = rospy.Publisher('armCamera/nearestObject', Image, queue_size=100)
         image_pub.publish(proc_image)
         
-        save_image(cropped_object)
+        save_image(cropped_object, 1)
     else:
         pass
 
