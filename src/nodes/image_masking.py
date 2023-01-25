@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /home/jiehui/anaconda3/envs/tensorflow/bin/python
 import rospy
 import sys
 import cv2
@@ -26,8 +26,9 @@ class boundingbox:
     centroid = Point(0, 0, 0)
 
 def imgmsg_to_cv2(img_msg):
+    rgb8_flag = 0
     if img_msg.encoding != "bgr8":
-        rospy.logerr("This Coral detect node has been hardcoded to the 'bgr8' encoding.  Come change the code if you're actually trying to implement a new camera")
+        rgb8_flag = 1
     dtype = np.dtype("uint8") # Hardcode to 8 bits...
     dtype = dtype.newbyteorder('>' if img_msg.is_bigendian else '<')
     image_opencv = np.ndarray(shape=(img_msg.height, img_msg.width, 3), # and three channels of data. Since OpenCV works with bgr natively, we don't need to reorder the channels.
@@ -35,6 +36,10 @@ def imgmsg_to_cv2(img_msg):
     # If the byt order is different between the message and the system.
     if img_msg.is_bigendian == (sys.byteorder == 'little'):
         image_opencv = image_opencv.byteswap().newbyteorder()
+
+    if rgb8_flag:
+        image_opencv = cv2.cvtColor(image_opencv, cv2.COLOR_RGB2BGR)
+        
     return image_opencv
 
 def cv2_to_imgmsg(cv_image):
@@ -43,7 +48,7 @@ def cv2_to_imgmsg(cv_image):
     img_msg.width = cv_image.shape[1]
     img_msg.encoding = "bgr8"
     img_msg.is_bigendian = 0
-    img_msg.data = cv_image.tostring()
+    img_msg.data = cv_image.tobytes()
     img_msg.step = len(img_msg.data) // img_msg.height # That double line is actually integer division, not a comment
     return img_msg
 
@@ -133,7 +138,7 @@ def save_image(image, save_flag):
 def process_image(image_msg, bb_fromImage, bb_fromCloud):
 
     # Declare the cvBridge object
-    proc_image = imgmsg_to_cv2(image_msg, "bgr8")
+    proc_image = imgmsg_to_cv2(image_msg)
 
     bb_fromImage_corners = get_boundingBoxPoints_from_marker(bb_fromImage.points)
     bb_fromCloud_corners = get_boundingBoxPoints_from_marker(bb_fromCloud.points)
@@ -145,10 +150,10 @@ def process_image(image_msg, bb_fromImage, bb_fromCloud):
     cropped_object = get_cropped_object(proc_image, bb_corners)
 
     if cropped_object is not None:
-        proc_image = cv2_to_imgmsg(cropped_object, encoding="passthrough")
+        proc_image = cv2_to_imgmsg(cropped_object)
         
         # Define the image publisher
-        image_pub = rospy.Publisher('armCamera/nearestObject', Image, queue_size=100)
+        image_pub = rospy.Publisher('armCamera/nearestObject_Image', Image, queue_size=100)
         image_pub.publish(proc_image)
         
         save_image(cropped_object, 1)
