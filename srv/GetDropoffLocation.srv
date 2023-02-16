@@ -1,0 +1,4 @@
+
+---
+geometry_msgs/PoseStamped object_dropoff_location
+std_msgs/String object_class

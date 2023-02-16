@@ -9,7 +9,7 @@ from std_msgs.msg import Bool
 
 from collections import Counter
 
-from image_masking_with_pointclouds_and_colour.srv import GetPickupLocation,GetPickupLocationResponse
+from image_masking_with_pointclouds_and_colour.srv import GetDropoffLocation,GetDropoffLocationResponse
 
 print("Python Version: " + str(sys.version_info[0]) + '.' + str(sys.version_info[1]))
 
@@ -46,7 +46,7 @@ def record_object_params(object_class_msg, object_poseStamped_msg, object_is_bb_
         observed_object.location = object_poseStamped_msg
 
 def handle_get_pickup_location(req):
-    return (GetPickupLocationResponse(object_location=observed_object.location, object_class=convert_string_to_rosMsg(observed_object.get_object_class())))
+    return (GetDropoffLocationResponse(object_location=observed_object.location, object_class=convert_string_to_rosMsg(observed_object.get_object_class())))
 
 def start_node():
     rospy.init_node('get_pickup_location')
@@ -61,7 +61,7 @@ def start_node():
     ts = message_filters.ApproximateTimeSynchronizer([object_class, object_poseStamped, object_is_bb_intersecting], queue_size=1, slop=1000000000000000000, allow_headerless=True)
     ts.registerCallback(record_object_params)
     
-    s = rospy.Service('GetPickupLocation', GetPickupLocation, handle_get_pickup_location)    
+    s = rospy.Service('GetDropoffLocation', GetDropoffLocation, handle_get_pickup_location)    
     rospy.spin()
 
 if __name__ == '__main__':
