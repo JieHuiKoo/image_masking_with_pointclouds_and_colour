@@ -1,4 +1,4 @@
-#! /home/jiehui/anaconda3/envs/tensorflow/bin/python
+#! /usr/bin/python3
 import rospy
 import sys
 import cv2
@@ -156,7 +156,7 @@ def process_image(image_msg, bb_fromImage, bb_fromCloud):
         image_pub = rospy.Publisher('armCamera/nearestObject_Image', Image, queue_size=100)
         image_pub.publish(proc_image)
         
-        save_image(cropped_object, 1)
+        save_image(cropped_object, 0)
     else:
         pass
 
