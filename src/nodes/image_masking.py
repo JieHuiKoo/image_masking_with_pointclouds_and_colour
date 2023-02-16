@@ -9,6 +9,7 @@ import os
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker
+from std_msgs.msg import Bool
 import message_filters
 
 import math
@@ -155,10 +156,14 @@ def process_image(image_msg, bb_fromImage, bb_fromCloud):
         # Define the image publisher
         image_pub = rospy.Publisher('armCamera/nearestObject_Image', Image, queue_size=100)
         image_pub.publish(proc_image)
+
+        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=100)
+        image_bool.publish(True)
         
         save_image(cropped_object, 0)
     else:
-        pass
+        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=100)
+        image_bool.publish(False)
 
 def start_node():
     rospy.init_node('image_masking')
