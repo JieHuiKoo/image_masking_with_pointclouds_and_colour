@@ -56,7 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  GetDropoffLocation.srv
+  GetPickupLocation.srv
 )
 
 ## Generate actions in the 'action' folder

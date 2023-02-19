@@ -1,0 +1,4 @@
+
+---
+geometry_msgs/PoseStamped object_pickup_location
+std_msgs/String object_class
