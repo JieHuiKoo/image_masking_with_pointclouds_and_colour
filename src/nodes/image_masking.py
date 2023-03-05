@@ -154,15 +154,15 @@ def process_image(image_msg, bb_fromImage, bb_fromCloud):
         proc_image = cv2_to_imgmsg(cropped_object)
         
         # Define the image publisher
-        image_pub = rospy.Publisher('armCamera/nearestObject_Image', Image, queue_size=100)
+        image_pub = rospy.Publisher('armCamera/nearestObject_Image', Image, queue_size=1)
         image_pub.publish(proc_image)
 
-        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=100)
+        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=1)
         image_bool.publish(True)
         
         save_image(cropped_object, 0)
     else:
-        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=100)
+        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=1)
         image_bool.publish(False)
 
 def start_node():
