@@ -46,12 +46,14 @@ def record_object_params(object_class_msg, object_poseStamped_msg, object_is_bb_
         observed_object.location = object_poseStamped_msg
 
 def handle_get_pickup_location(req):
-    rospy.loginfo("|GetPickupCentroid| Request received")
+    rospy.loginfo("[GetPickupCentroid]: Request received")
+    rospy.loginfo("[GetPickupCentroid]: Object Class: %s", observed_object.get_object_class())
+
     return (GetPickupCentroidResponse(object_centroid=observed_object.location, object_class=convert_string_to_rosMsg(observed_object.get_object_class())))
 
 def start_node():
     rospy.init_node('get_pickup_centroid')
-    rospy.loginfo('|GetPickupCentroid| Service started')
+    rospy.loginfo('{GetPickupCentroid]: Service started')
     
     object_class = message_filters.Subscriber("armCamera/nearestObject_Class", String)
     object_poseStamped = message_filters.Subscriber("armCamera/nearestCloudCluster_Centroid", PoseStamped)
