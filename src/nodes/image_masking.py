@@ -154,15 +154,15 @@ def process_image(image_msg, bb_fromImage, bb_fromCloud):
         proc_image = cv2_to_imgmsg(cropped_object)
         
         # Define the image publisher
-        image_pub = rospy.Publisher('armCamera/nearestObject_Image', Image, queue_size=100)
+        image_pub = rospy.Publisher('armCamera/nearestObject_Image', Image, queue_size=1)
         image_pub.publish(proc_image)
 
-        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=100)
+        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=1)
         image_bool.publish(True)
         
         save_image(cropped_object, 0)
     else:
-        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=100)
+        image_bool = rospy.Publisher('armCamera/nearestObject_Detected', Bool, queue_size=1)
         image_bool.publish(False)
 
 def start_node():
@@ -175,7 +175,7 @@ def start_node():
 
     # Subscribe to the 3 topics
     # Slop refers to delay we can wait for message in seconds
-    ts = message_filters.ApproximateTimeSynchronizer([image_sub, boundingBoxPoints_fromImage_sub, boundingBoxPoints_fromCloud_sub], queue_size=1, slop=1000000000000000000, allow_headerless=False)
+    ts = message_filters.ApproximateTimeSynchronizer([image_sub, boundingBoxPoints_fromImage_sub, boundingBoxPoints_fromCloud_sub], queue_size=1, slop=100000000000000000000000000, allow_headerless=False)
     ts.registerCallback(process_image)
     
     rospy.spin()
