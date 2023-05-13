@@ -6,7 +6,9 @@ object_segmentation_with_colour
 
 A ROS service is also implemented to interface with the information available.
 
-To run, execute the following command
+To run:
+
+Execute the following commands
 ```
 rosrun image_masking_with_pointclouds_and_colour image_masking.py
 rosrun image_masking_with_pointclouds_and_colour get_pickup_centroid.py
