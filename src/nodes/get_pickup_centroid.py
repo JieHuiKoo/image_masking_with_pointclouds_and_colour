@@ -60,7 +60,7 @@ def record_object_params(object_class_msg, object_poseStamped_msg, object_is_bb_
                 return
     
     print("[GetPickupCentroid]: Object Invalid")
-    observed_object.valid = True # To fix: observed object sometimes registers as invalid, set to always be true for now
+    observed_object.valid = False
     
 def is_within_reasonable_delay(observed_object):
     return ((rospy.Time.now() - observed_object.timestamp).to_sec() < 1000)
