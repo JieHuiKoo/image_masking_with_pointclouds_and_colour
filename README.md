@@ -10,6 +10,6 @@ To run:
 
 Execute the following commands
 ```
-rosrun image_masking_with_pointclouds_and_colour image_masking.py
-rosrun image_masking_with_pointclouds_and_colour get_pickup_centroid.py
+rosrun image_masking_with_pointclouds_and_colour image_masking.py # ON robot
+rosrun image_masking_with_pointclouds_and_colour get_pickup_centroid.py # ON PC
 ```
